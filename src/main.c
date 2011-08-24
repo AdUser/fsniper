@@ -512,7 +512,7 @@ int main(int argc, char** argv)
 			}
 		    }
 		}
-                else if (event->len && (event->mask & IN_CREATE && event->mask & IN_ISDIR))
+                else if (event->len && (event->mask & IN_ISDIR))
                 {
                     for (node = g_watchnode->next; node; node = node->next)
                         if (node->wd == event->wd)
@@ -523,22 +523,12 @@ int main(int argc, char** argv)
                         /* combine the name inotify gives with the full path to the file */
                         filename = malloc(strlen(node->path) + strlen("/") + strlen(event->name) + 1);
                         sprintf(filename, "%s/%s", node->path, event->name);
-                        watch_dir(node, ifd, strdup(filename), node->section);
-                        free(filename);
-                    }
-                }
-		else if (event->len && (event->mask & IN_DELETE && event->mask & IN_ISDIR))
-                {
-                    for (node = g_watchnode->next; node; node = node->next)
-                        if (node->wd == event->wd)
-                            break;
 
-                    if (node)
-                    {
-                        /* combine the name inotify gives with the full path to the file */
-                        filename = malloc(strlen(node->path) + strlen("/") + strlen(event->name) + 1);
-                        sprintf(filename, "%s/%s", node->path, event->name);
-                        unwatch_dir(filename, ifd);
+                        if      (event->mask & IN_CREATE)
+                            watch_dir(node, ifd, strdup(filename), node->section);
+                        else if (event->mask & IN_DELETE)
+                            unwatch_dir(filename, ifd);
+
                         free(filename);
                     }
                 }
